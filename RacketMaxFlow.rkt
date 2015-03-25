@@ -1,25 +1,140 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-advanced-reader.ss" "lang")((modname RacketMaxFlow) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f ())))
-(define G (list (list "S" "U" 20)
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname RacketMaxFlow) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+
+
+; original graph
+(define G (list (list "S" "U" 20 0)
+                (list "S" "V" 10 0)
+                (list "U" "V" 30 0)
+                (list "U" "T" 10 0)
+                (list "V" "T" 20 0)))
+
+; residual graph
+(define Gf (list (list "S" "U" 20)
                 (list "S" "V" 10)
                 (list "U" "V" 30)
                 (list "U" "T" 10)
                 (list "V" "T" 20)))
 
-(define big-ass-number 9999999999999)
+(define P1 
+  (list (list "S" "U" 20) (list "U" "V" 30) (list "V" "T" 20)))
 
+(define P1b
+  (list (list "S" "U" 20) (list "U" "V" 20) (list "V" "T" 20)))
+
+;; An Edge is (list v1 v2 cap flo)
+
+;; A REdge is (list v1 v2 flo)   where flo can be negative to indicate a backward edge
+
+
+
+;; add-flow/edge : Edge REdge -> Edge
+
+(define (add-flow/edge e re)
+  (list (first e) (second e) (third e) (+ (fourth e) (third re))))
+
+
+;; add-flow : Graph Path -> Graph
+
+(check-expect (add-flow G P1b)
+              (list (list "S" "U" 20 20)
+                    (list "S" "V" 10 0)
+                    (list "U" "V" 30 20)
+                    (list "U" "T" 10 0)
+                    (list "V" "T" 20 20)))
+
+(define (add-flow G p)
+  (map (λ(e) (if (contains-edge? p e)
+                 (add-flow/edge e (find-edge p e))
+                 e))
+       G))
+
+
+
+; update-residual : RGraph Graph -> RGraph
+
+(check-expect (update-residual (list 
+                                (list "S" "V" 10)
+                                (list "U" "V" 10)
+                                (list "U" "T" 10)
+                                )
+                               (list (list "S" "U" 20 0)
+                                     (list "S" "V" 10 0)
+                                     (list "U" "V" 30 0)
+                                     (list "U" "T" 10 0)
+                                     (list "V" "T" 20 0)))
+              (list (list "U" "S" -20)
+                    (list "S" "V" 10)
+                    (list "U" "V" 10)
+                    (list "V" "U" -20)
+                    (list "U" "T" 10)
+                    (list "T" "V" -20)
+                                ))
+
+(define (update-residual RG G)   ; stub
+  empty)
 
 
 
 ;;removes forward edges whos capacity has been reached
-(define (augment-path P)
-  (filter (lambda (y) (> (third y) 0)) (map (lambda (x) (list (first x) (second x) (- (third x) (bottleneck-path P)))) P)))
+(check-expect (augment-path Gf P1 20)
+              (list 
+                    (list "S" "V" 10)
+                    (list "U" "V" 10)
+                    (list "U" "T" 10)
+                    ))
+
+(define (augment-path G P amt)
+  (filter non-zero-edge?
+          (map (λ(e) (if (contains-edge? P e)
+                         (reduce-by e amt)
+                         e))
+               G)))
+
+;; reduce-by : Edge Number -> Edge
+
+(define (reduce-by e amt)
+  (if (= 4 (length e))
+      (list (first e) (second e) (- (third e) amt) (fourth e))
+      (list (first e) (second e) (- (third e) amt) )))
+
+
+;; contains-edge? : Graph Edge -> Boolean
+(define (contains-edge? G e)
+  (cond [(empty? G) false]
+        [(cons? G) (or (edge-equal? (first G) e)
+                       (contains-edge? (rest G) e))]))
+
+
+;; find-edge? : Graph Edge -> Edge
+(define (find-edge G e)
+  (cond [(empty? G) (error "edge not found")]
+        [(cons? G) (if (edge-equal? (first G) e)
+                       (first G)
+                       (find-edge (rest G) e))]))
+
+
+
+;; edge-equal? : Edge Edge -> Boolean
+(define (edge-equal? e1 e2)
+  (and (string=? (first e1) (first e2))
+       (string=? (second e1) (second e2))))
+
+
+;; non-zero-edge? : Edge -> Boolean
+(define (non-zero-edge? e)
+  (not (zero? (third e))))
+
+  
+;  (filter (lambda (y) (> (third y) 0))
+;          (map (lambda (x) (list (first x) (second x) 
+;                                 (- (third x) (bottleneck-path P)))) P)))
 
 ;;finds lowest capacity along path
 (define (bottleneck-path P)
   (cond
-  [(empty? P) big-ass-number]
+  [(empty? (rest P)) (third (first P))]
   [else (min (third (first P)) (bottleneck-path (rest P)))]))
 
 
