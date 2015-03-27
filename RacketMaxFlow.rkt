@@ -75,14 +75,27 @@
 (define (update-residual RG G)
   (cond 
     [(empty? G) null]
-    [(cons? G) (if (contains-edge? RG (first G)) 
+    [(cons? G) (if (contains-edge? RG (first G))
+                   (if (equal-capacity? (find-edge RG (first G)) (first G))
                     (cons (make-REdge (find-edge RG (first G))) (update-residual RG (rest G)))
+                    (cons (make-REdge (find-edge RG (first G))) (cons (reverse-REdgeCap (find-edge RG (first G))(first G)) (update-residual RG (rest G)))))
                     (cons (reverse-REdge (first G)) (update-residual RG (rest G))))]
                     ))
 
-(define (make-REdge e) 
+;;equal-capacity?: edge edge -> boolean
+(define (equal-capacity? re e)
+  (equal? (third re) (third e)))
+
+;;reverse-RedgeCap: edge edge -> edge
+(define (reverse-REdgeCap re e)
+(list (second e) (first e) (- (third re) (third e))))
+
+;;make-REdge: edge -> edge
+(define (make-REdge e)
   (list (first e) (second e) (third e)))
 
+
+;;reverse-REdge: edge -> edge
 (define (reverse-REdge e)
   (list (second e) (first e) (- 0 (third e))))
 
