@@ -3,7 +3,7 @@ Require Import Ascii.
 Require Import List.
 Require Import Le.
 Import ListNotations.
-              
+
 (* an edge in the residual graph *)
 Record REdge : Set := mk_redge
                         { rsrc : ascii;
@@ -67,9 +67,7 @@ Fixpoint bottleneck (res:list REdge) : nat :=
 If bottleneck (re::res) produces n, then
 n is less than/equal the capacity of every
 edge in the list (re::res).
- *)
-Require Import Compare_dec.
-
+*)
 Lemma bottleneck_picks_min :
   forall res re n,
     bottleneck (re::res) = n ->
@@ -96,39 +94,11 @@ Proof.
     intros re'' HIn''.
     apply IHt with h; auto.
 
-    destruct (le_lt_dec (rcap re) (bottleneck (h::t))) as [H1 | h1].
+    assert (rcap re < bottleneck (h::t)
+            \/ bottleneck (h::t) <= rcap re).
 
-    replace(bottleneck(re :: h :: t)) with (min (rcap re) (bottleneck (h::t))) in Hc; auto.
-
-    rewrite (min_l _ _ H1) in Hc.
-
-    destruct Hin.
-    rewrite <- Hc.
-    rewrite H0.
-    trivial.
-    
-    assert (bottleneck (h :: t) <= rcap re').
-    apply H; auto.
-    rewrite <- Hc.
-    rewrite H1.
-    auto.
-
-    
-    replace(bottleneck(re :: h :: t)) with (min (rcap re) (bottleneck (h::t))) in Hc; auto.
-    rewrite (min_r (rcap re) (bottleneck (h::t))) in Hc; auto with arith.
-
-    destruct Hin.
-    rewrite <-H0.
-    rewrite <-Hc'.
-    auto with arith.
-    rewrite <-Hc.
-    apply H.
-    auto.
     
 Qed.
-
-
-
 
 
 
