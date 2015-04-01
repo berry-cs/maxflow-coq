@@ -127,6 +127,17 @@ Proof.
     
 Qed.
 
+Fixpoint largest_cap (rG: RGraph) : nat :=
+  match rG with
+    |[] => 0
+    |h :: [] => rcap h
+    |h :: t => (max (rcap h) (largest_cap t))
+  end.
+
+
+
+    
+
 
 
 
