@@ -154,6 +154,8 @@
 ;          (map (lambda (x) (list (first x) (second x) 
 ;                                 (- (third x) (bottleneck-path P)))) P)))
 
+
+;; IN COQ (proof bottleneck_pick_min)
 ;;finds lowest capacity along path
 (define (bottleneck-path P)
   (cond
@@ -179,7 +181,10 @@
 (define (all-node-paths G node)
   (filter (lambda (x) (equal? node (first x))) G))
 
+
+;; IN COQ (no proofs, fixpoint)
 ;;finds largest capacity in G
+;; graph -> nat
 (define (largest-cap G) 
 (cond
   [(empty? G) 0]
