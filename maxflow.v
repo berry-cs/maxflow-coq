@@ -129,6 +129,10 @@ Proof.
     
 Qed.
 
+Definition beq_ascii (a b: ascii) : bool :=
+  if (beq_nat (nat_of_ascii a) (nat_of_ascii b))
+  then true
+  else false.
 
 Fixpoint largest_cap (rG: RGraph) : nat :=
   match rG with
@@ -138,7 +142,7 @@ Fixpoint largest_cap (rG: RGraph) : nat :=
   end.
 
 Definition edge_equal (rE1 rE2: REdge) : bool :=
-   (andb (beq_nat (nat_of_ascii (rsrc rE1)) (nat_of_ascii (rsrc rE2))) (beq_nat (nat_of_ascii (rdst rE1)) (nat_of_ascii (rdst rE2)))).
+   (andb (beq_ascii (rsrc rE1)  (rsrc rE2)) (beq_ascii (rdst rE1) (rdst rE2))).
 
 Fixpoint contains_edge (rG: RGraph) (rE: REdge) : bool :=
   match rG with
@@ -153,7 +157,7 @@ Definition non_zero_edge (rE: REdge) : bool :=
 Fixpoint all_vert_paths (rG: RGraph) (v: ascii) : RGraph :=
   match rG with
     |[] => []
-    | h :: t => if (beq_nat (nat_of_ascii v) (nat_of_ascii (rsrc h)))
+    | h :: t => if (beq_ascii v (rsrc h))
                     then h :: (all_vert_paths t v)
                     else (all_vert_paths t v)
   end.
@@ -167,9 +171,7 @@ Fixpoint select_edge (rG: RGraph) (v: ascii) : REdge :=
   end.
 
 Compute (select_edge Gf "S").
-
-Fixpoint st_path (rG: RGraph) (v: ascii) : RGraph
-    Hey There
+                                               
 
 
 
