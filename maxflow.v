@@ -129,6 +129,7 @@ Proof.
     
 Qed.
 
+
 Fixpoint largest_cap (rG: RGraph) : nat :=
   match rG with
     |[] => 0
@@ -144,6 +145,7 @@ Fixpoint contains_edge (rG: RGraph) (rE: REdge) : bool :=
     |[] => false
     |h :: t => (orb (edge_equal h rE) (contains_edge t rE))
   end.
+
 
 Definition non_zero_edge (rE: REdge) : bool :=
   (negb (beq_nat 0 (rcap rE))).
@@ -164,8 +166,11 @@ Fixpoint select_edge (rG: RGraph) (v: ascii) : REdge :=
                     else (select_edge t v)
   end.
 
-Compute (select_edge Gf "S"). 
+Compute (select_edge Gf "S").
+
+Fixpoint st_path (rG: RGraph) (v: ascii) : RGraph
     
+
 
 
 
