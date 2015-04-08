@@ -182,7 +182,8 @@ Fixpoint find_edge (rG: RGraph) (rE: REdge) : REdge :=
   end.
 
 Definition reduce_by_REdge (rE: REdge) (n : nat) : REdge :=
- (mk_edge (rsrc rE) (
+  (mk_redge (rsrc rE) (rdst rE) ((rcap rE)-n)).
+
 
 
 
