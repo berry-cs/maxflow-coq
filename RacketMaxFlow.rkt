@@ -130,6 +130,7 @@
                        (contains-edge? (rest G) e))]))
 
 
+;; In coq
 ;; find-edge? : Graph Edge -> Edge
 (define (find-edge G e)
   (cond [(empty? G) (error "edge not found")]
@@ -166,6 +167,13 @@
   [(empty? (rest P)) (third (first P))]
   [else (min (third (first P)) (bottleneck-path (rest P)))]))
 
+
+;; problem here. The st_path can get caught in an infinite path. we need to modify st_path to create a list of visited edges. If the edge has been visited
+;; then pick a new edge from the avalible edges. 
+
+;; st_path( graph ) = st_path_complete( graph, "S", [] )
+
+;; st_path_complete: graph, starting node, list of visited edges -> path (list of edges)
 
 ;;finds a path from S to T sort of
 (define (st-path G node)

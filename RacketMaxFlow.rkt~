@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname RacketMaxFlow) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname RacketMaxFlow) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
 
 
 ; original graph
@@ -72,9 +72,32 @@
                     (list "T" "V" -20)
                                 ))
 
-(define (update-residual RG G)   ; stub
-  empty)
+(define (update-residual RG G)
+  (cond 
+    [(empty? G) null]
+    [(cons? G) (if (contains-edge? RG (first G))
+                   (if (equal-capacity? (find-edge RG (first G)) (first G))
+                    (cons (make-REdge (find-edge RG (first G))) (update-residual RG (rest G)))
+                    (cons (make-REdge (find-edge RG (first G))) (cons (reverse-REdgeCap (find-edge RG (first G))(first G)) (update-residual RG (rest G)))))
+                    (cons (reverse-REdge (first G)) (update-residual RG (rest G))))]
+                    ))
 
+;;equal-capacity?: edge edge -> boolean
+(define (equal-capacity? re e)
+  (equal? (third re) (third e)))
+
+;;reverse-RedgeCap: edge edge -> edge
+(define (reverse-REdgeCap re e)
+(list (second e) (first e) (- (third re) (third e))))
+
+;;make-REdge: edge -> edge
+(define (make-REdge e)
+  (list (first e) (second e) (third e)))
+
+
+;;reverse-REdge: edge -> edge
+(define (reverse-REdge e)
+  (list (second e) (first e) (- 0 (third e))))
 
 
 ;;removes forward edges whos capacity has been reached
@@ -99,7 +122,7 @@
       (list (first e) (second e) (- (third e) amt) (fourth e))
       (list (first e) (second e) (- (third e) amt) )))
 
-
+;;In Coq
 ;; contains-edge? : Graph Edge -> Boolean
 (define (contains-edge? G e)
   (cond [(empty? G) false]
@@ -115,13 +138,13 @@
                        (find-edge (rest G) e))]))
 
 
-
+;;In Coq
 ;; edge-equal? : Edge Edge -> Boolean
 (define (edge-equal? e1 e2)
   (and (string=? (first e1) (first e2))
        (string=? (second e1) (second e2))))
 
-
+;;In Coq
 ;; non-zero-edge? : Edge -> Boolean
 (define (non-zero-edge? e)
   (not (zero? (third e))))
@@ -131,6 +154,12 @@
 ;          (map (lambda (x) (list (first x) (second x) 
 ;                                 (- (third x) (bottleneck-path P)))) P)))
 
+
+<<<<<<< HEAD
+;;In Coq
+=======
+;; IN COQ (proof bottleneck_pick_min)
+>>>>>>> origin/master
 ;;finds lowest capacity along path
 (define (bottleneck-path P)
   (cond
@@ -145,18 +174,25 @@
    [else (cons (select-edge G node) (st-path G (second (select-edge G node)))
            )]))
 
-
+;;In Coq
 ;;Finds an edge with the greatest capacity connected to [node]
 (define (select-edge G node)
  (first (filter (lambda (x) (= (third x) 
                       (largest-cap (all-node-paths G node)))) (all-node-paths G node))))
   
-
+;;In Coq
 ;; finds all paths connected to node
 (define (all-node-paths G node)
   (filter (lambda (x) (equal? node (first x))) G))
 
+
+<<<<<<< HEAD
+;;In Coq
+=======
+;; IN COQ (no proofs, fixpoint)
+>>>>>>> origin/master
 ;;finds largest capacity in G
+;; graph -> nat
 (define (largest-cap G) 
 (cond
   [(empty? G) 0]
