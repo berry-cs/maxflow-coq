@@ -122,7 +122,7 @@
       (list (first e) (second e) (- (third e) amt) (fourth e))
       (list (first e) (second e) (- (third e) amt) )))
 
-
+;;In Coq
 ;; contains-edge? : Graph Edge -> Boolean
 (define (contains-edge? G e)
   (cond [(empty? G) false]
@@ -138,13 +138,13 @@
                        (find-edge (rest G) e))]))
 
 
-
+;;In Coq
 ;; edge-equal? : Edge Edge -> Boolean
 (define (edge-equal? e1 e2)
   (and (string=? (first e1) (first e2))
        (string=? (second e1) (second e2))))
 
-
+;;In Coq
 ;; non-zero-edge? : Edge -> Boolean
 (define (non-zero-edge? e)
   (not (zero? (third e))))
@@ -154,6 +154,8 @@
 ;          (map (lambda (x) (list (first x) (second x) 
 ;                                 (- (third x) (bottleneck-path P)))) P)))
 
+
+;;In Coq
 ;;finds lowest capacity along path
 (define (bottleneck-path P)
   (cond
@@ -168,17 +170,19 @@
    [else (cons (select-edge G node) (st-path G (second (select-edge G node)))
            )]))
 
-
+;;In Coq
 ;;Finds an edge with the greatest capacity connected to [node]
 (define (select-edge G node)
  (first (filter (lambda (x) (= (third x) 
                       (largest-cap (all-node-paths G node)))) (all-node-paths G node))))
   
-
+;;In Coq
 ;; finds all paths connected to node
 (define (all-node-paths G node)
   (filter (lambda (x) (equal? node (first x))) G))
 
+
+;;In Coq
 ;;finds largest capacity in G
 (define (largest-cap G) 
 (cond

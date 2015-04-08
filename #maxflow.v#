@@ -2,8 +2,8 @@
 Require Import Ascii.
 Require Import List.
 Require Import Le.
-Import ListNotations.
-              
+Require Import EqNat.
+Import ListNotations.            
 (* an edge in the residual graph *)
 Record REdge : Set := mk_redge
                         { rsrc : ascii;
@@ -11,7 +11,8 @@ Record REdge : Set := mk_redge
                           rcap : nat }.
 
 Check (mk_redge "S" "V" 10).
-
+                              
+                               
 (* an edge in the full graph *)
 
 Record Edge : Set := mk_edge
@@ -42,7 +43,8 @@ Definition Gf : RGraph
        mk_redge "U" "T" 10 ;
        mk_redge "V" "T" 20 ].
 
-
+Definition blankREdge : REdge
+  := mk_redge " " " " 0.
 
 (*
 Fixpoint bottleneck (fst:REdge)
@@ -127,12 +129,7 @@ Proof.
     
 Qed.
 
-Fixpoint largest_cap (rG: RGraph) : nat :=
-  match rG with
-    |[] => 0
-    |h :: [] => rcap h
-    |h :: t => (max (rcap h) (largest_cap t))
-  end.
+
 
 
 
@@ -143,4 +140,4 @@ Fixpoint largest_cap (rG: RGraph) : nat :=
 
 
 
-(* end *)
+(* End *)

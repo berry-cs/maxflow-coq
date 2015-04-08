@@ -2,8 +2,8 @@
 Require Import Ascii.
 Require Import List.
 Require Import Le.
-Import ListNotations.
-              
+Require Import EqNat.
+Import ListNotations.            
 (* an edge in the residual graph *)
 Record REdge : Set := mk_redge
                         { rsrc : ascii;
@@ -11,7 +11,8 @@ Record REdge : Set := mk_redge
                           rcap : nat }.
 
 Check (mk_redge "S" "V" 10).
-
+                              
+                               
 (* an edge in the full graph *)
 
 Record Edge : Set := mk_edge
@@ -42,7 +43,8 @@ Definition Gf : RGraph
        mk_redge "U" "T" 10 ;
        mk_redge "V" "T" 20 ].
 
-
+Definition blankREdge : REdge
+  := mk_redge " " " " 0.
 
 (*
 Fixpoint bottleneck (fst:REdge)
@@ -134,6 +136,39 @@ Fixpoint largest_cap (rG: RGraph) : nat :=
     |h :: t => (max (rcap h) (largest_cap t))
   end.
 
+Definition edge_equal (rE1 rE2: REdge) : bool :=
+   (andb (beq_nat (nat_of_ascii (rsrc rE1)) (nat_of_ascii (rsrc rE2))) (beq_nat (nat_of_ascii (rdst rE1)) (nat_of_ascii (rdst rE2)))).
+
+Fixpoint contains_edge (rG: RGraph) (rE: REdge) : bool :=
+  match rG with
+    |[] => false
+    |h :: t => (orb (edge_equal h rE) (contains_edge t rE))
+  end.
+
+Definition non_zero_edge (rE: REdge) : bool :=
+  (negb (beq_nat 0 (rcap rE))).
+
+Fixpoint all_vert_paths (rG: RGraph) (v: ascii) : RGraph :=
+  match rG with
+    |[] => []
+    | h :: t => if (beq_nat (nat_of_ascii v) (nat_of_ascii (rsrc h)))
+                    then h :: (all_vert_paths t v)
+                    else (all_vert_paths t v)
+  end.
+
+Fixpoint select_edge (rG: RGraph) (v: ascii) : REdge :=
+  match rG with
+    |[] => blankREdge
+    |h :: t => if (beq_nat (rcap h) (largest_cap (all_vert_paths rG v)))
+                    then h
+                    else (select_edge t v)
+  end.
+
+Compute (select_edge Gf "S"). 
+    
+
+
+
 
 
     
@@ -143,4 +178,4 @@ Fixpoint largest_cap (rG: RGraph) : nat :=
 
 
 
-(* end *)
+(* End *)
