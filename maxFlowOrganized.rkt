@@ -43,12 +43,41 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; updates the graph to represent the path taken by the algorithm
-; update-graph: Graph -> Graph
+; create the residual graph by modifying the graph
+; create-residual: Graph -> RGraph
 
-; updates the residual graph to represent the path taken by the algorithm
-; update-residual: RGraph -> RGraph
+(check-expect (create-residual 
+               (list 
+                (make-Edge "S" "U" 20 20)
+                (make-Edge "S" "V" 10 0)
+                (make-Edge "U" "V" 30 20)
+                (make-Edge "U" "T" 10 0)
+                (make-Edge "V" "T" 20 20)))
+              (list
+               (make-REdge "U" "S" 20)
+               (make-REdge "S" "V" 10)
+               (make-REdge "U" "V" 10)
+               (make-REdge "V" "U" 20)
+               (make-REdge "U" "T" 10)
+               (make-REdge "T" "V" 20))
+              )
 
+(define (create-residual G)
+  (cond
+    [(empty? G) empty]
+    [(cons? G) (append (create-REdges (first G)) (create-residual (rest G))) ]
+    )
+  )
+
+;create-REdges creates the REdge(s) associated with a singe edge both reverse and forward
+;create-REdges: Edge -> (list REdges)
+
+(define (create-REdges e)
+  (cond
+    [(= 0 (Edge-flow e)) (list (make-REdge (Edge-start e) (Edge-end e) (Edge-capacity e)))]
+    [(= (Edge-capacity e) (Edge-flow e)) (list (make-REdge (Edge-end e) (Edge-start e) (Edge-capacity e)))]
+    [else (list (make-REdge (Edge-start e) (Edge-end e) (- (Edge-capacity e) (Edge-flow e))) (make-REdge (Edge-end e) (Edge-start e) (Edge-flow e)))]
+  ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
