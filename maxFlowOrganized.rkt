@@ -38,8 +38,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Main-loop runs the whole algorithm
+; main-loop runs the whole algorithm
 ; main-loop; Graph -> Graph
+
+(define (main-loop G)
+  (local [
+          (define RG (create-residual G))
+          (define stPath (find-st-path RG))
+          ]
+    (if (false? stPath)
+        G
+        (main-loop (augment G stPath))
+    )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -260,16 +270,6 @@
                20)
                 (make-REdge "S" "U" 20)
                 )
-
-;;(check-expect (select-edge-loop 
-;;               (list 
-;;                (make-REdge "S" "U" 20)
-;;                (make-REdge "S" "V" 10)
-;;                ) 
-;;               30)
-;;                (make-REdge "S" "U" 20)
-;;               )
-
 
 (define (select-edge-loop paths cap)
   (cond
