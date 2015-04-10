@@ -53,7 +53,99 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; augment removes forward edges whos capacity has been reached. 
-; augment: Graph Path bottleneck -> Graph
+; augment: Graph Path -> Graph
+
+(check-expect (augment G
+              (list 
+               (make-REdge "S" "U" 20)
+               (make-REdge "U" "V" 30)
+               (make-REdge "V" "T" 20)))
+              (list 
+                (make-Edge "S" "U" 20 20)
+                (make-Edge "S" "V" 10 0)
+                (make-Edge "U" "V" 30 20)
+                (make-Edge "U" "T" 10 0)
+                (make-Edge "V" "T" 20 20)))
+
+(check-expect (augment (list 
+                (make-Edge "S" "U" 20 20)
+                (make-Edge "S" "V" 10 0)
+                (make-Edge "U" "V" 30 20)
+                (make-Edge "U" "T" 10 0)
+                (make-Edge "V" "T" 20 20))
+              (list 
+               (make-REdge "S" "V" 10)
+               (make-REdge "V" "U" 20)
+               (make-REdge "U" "T" 10)))
+              (list 
+                (make-Edge "S" "U" 20 20)
+                (make-Edge "S" "V" 10 10)
+                (make-Edge "U" "V" 30 10)
+                (make-Edge "U" "T" 10 10)
+                (make-Edge "V" "T" 20 20))
+              )
+              
+              
+
+(define (augment G P) 
+  (local[
+         (define bottleneck (bottleneck-path P))
+         ]
+  (augment-loop G P bottleneck)
+  ))
+
+(define (augment-loop G P bottleneck)
+  (cond
+    [(empty? G) empty]
+    [(cons? G) (cons (modify-edge (first G) P bottleneck) (augment-loop (rest G) P bottleneck))]
+    ))
+
+
+;modify-edge takes an edge from the graph and compares it to an REdge path. 
+;modify-edge: edge (list REdges) nat -> edge
+
+(define (modify-edge e P bottleneck) 
+  (cond
+    [(empty? P) e]
+    [(cons? P) (cond 
+                 [(forward-edge? e (first P)) (make-Edge (Edge-start e) (Edge-end e) (Edge-capacity e) (+ (Edge-flow e) bottleneck))]
+                 [(backward-edge? e (first P)) (make-Edge (Edge-start e) (Edge-end e) (Edge-capacity e) (- (Edge-flow e) bottleneck))]
+                 [else (modify-edge e (rest P) bottleneck)])
+               ]))
+
+;backward-edge? checks to see if a REdge is a backwards edge of an edge
+;backward-edge?: edge REdge -> bool
+(define (backward-edge? e re)
+  (and (equal? (Edge-start e) (REdge-end re)) (equal? (Edge-end e) (REdge-start re))))
+
+;forward-edge? checks to see if a REdge is a forward edge of an edge
+;forward-edge? edge REdge -> bool
+(define (forward-edge? e re)
+  (and (equal? (Edge-start e) (REdge-start re)) (equal? (Edge-end e) (REdge-end re))))
+  
+;Bottleneck-path finds the smallest capacity on a REdge path
+;Bottleneck-path: (list REdge) -> nat
+
+(check-expect (bottleneck-path
+              (list 
+               (make-REdge "S" "U" 20)
+               (make-REdge "U" "V" 30)
+               (make-REdge "V" "T" 20)))
+              20)
+
+(check-expect (bottleneck-path
+              (list 
+               (make-REdge "S" "V" 10)
+               (make-REdge "V" "U" 20)
+               (make-REdge "U" "T" 10)))
+              10)
+
+(define (bottleneck-path P)
+  (cond
+  [(empty? (rest P)) (REdge-capacity (first P))]
+  [else (min (REdge-capacity (first P)) (bottleneck-path (rest P)))]))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,35 +153,45 @@
 ;find-st-path finds a path from the S node to the T node and returns false if one couldnt be found. 
 ;find-st-path: RGraph -> Path
 
-(check-expect (find-st-Path Gf)
+(check-expect (find-st-path Gf)
               (list 
                (make-REdge "S" "U" 20)
                (make-REdge "U" "V" 30)
                (make-REdge "V" "T" 20)))
 
-(check-expect (find-st-Path Gf2)
+(check-expect (find-st-path Gf2)
               (list 
                (make-REdge "S" "V" 10)
                (make-REdge "V" "U" 20)
                (make-REdge "U" "T" 10)))
 
+(check-expect (find-st-path (list (make-REdge "S" "U" 20)
+                                  (make-REdge "S" "V" 10)
+                                  (make-REdge "U" "V" 30)
+                                  (make-REdge "T" "U" 10)
+                                  (make-REdge "T" "V" 20)))
+              false)
 
 
-(define (find-st-Path RG)
+
+(define (find-st-path RG)
   (st-path RG "S" (list "S")))
 
 ;st-path looks for edges that havent already been searched over in an attempt to reach the T node. produces false if no edge can be found. 
 ;st-path: RGraph targetNode (List nodes) -> Path
 (define (st-path RG atNode visited) 
+  (st-path-accu RG atNode visited empty)
+  )
+
+(define (st-path-accu RG atNode visited accumulated)
   (local[
          (define selectedREdge (select-edge (all-node-paths RG atNode) visited))
            ]
   (cond
-   [(equal? atNode "T") null] 
-   [else
-    (cons selectedREdge (st-path RG (REdge-end selectedREdge ) (cons atNode visited) )
-           )])))
-
+   [(equal? atNode "T") (reverse accumulated)] 
+   [(empty? selectedREdge) false]
+   [else 
+    (st-path-accu RG (REdge-end selectedREdge ) (cons atNode visited)  (cons selectedREdge accumulated))])))
 
 ;all-node-paths finds our target node and produces a list of all the edges that radiate out from that node
 ;all-node-paths: RGraph target -> (list REdges)
@@ -142,7 +244,7 @@
 
 (define (select-edge-loop paths cap)
   (cond
-    [(empty? paths) false]
+    [(empty? paths) empty]
     [else (if (equal? cap (REdge-capacity (first paths)))
               (first paths)
               (select-edge-loop (rest paths)))]
