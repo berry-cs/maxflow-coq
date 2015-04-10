@@ -35,6 +35,20 @@
   (list (first e) (second e) (third e) (+ (fourth e) (third re))))
 
 
+
+;;update-graph takes P
+;;compute-max-flow : Graph -> Graph
+(define (compute-max-flow G Gf) 
+    (define P (st-path Gf))
+     (cond 
+       [(false? P) G]
+       [else (compute-max-flow (update-graph P G) (update-residual Gf G))])
+  )
+      
+        
+        
+
+
 ;; add-flow : Graph Path -> Graph
 
 (check-expect (add-flow G P1b)
@@ -50,13 +64,36 @@
                  e))
        G))
 
+;;update-graph : RGraph Graph -> Graph
 
+(check-expect (update-graph (list 
+                                (list "S" "V" 10)
+                                (list "U" "V" 10) 
+                                (list "U" "T" 10)
+                                )
+                               (list (list "S" "U" 20 0)
+                                     (list "S" "V" 10 0)
+                                     (list "U" "V" 30 0)
+                                     (list "U" "T" 10 0)
+                                     (list "V" "T" 20 0)))
+              (list (list "S" "U" 20  20)
+                    (list "S" "V" 10  0)
+                    (list "U" "V" 30  2)
+                    (list "U" "T" 10  0)
+                    (list "V" "T" 20  20)
+                                ))
+
+(define (update-graph Gf G)
+  )
+
+
+;;(update-residual (augment-path resG (st-path resG "S")) G)
 
 ; update-residual : RGraph Graph -> RGraph
 
 (check-expect (update-residual (list 
                                 (list "S" "V" 10)
-                                (list "U" "V" 10)
+                                (list "U" "V" 10) 
                                 (list "U" "T" 10)
                                 )
                                (list (list "S" "U" 20 0)
@@ -130,7 +167,6 @@
                        (contains-edge? (rest G) e))]))
 
 
-;; In coq
 ;; find-edge? : Graph Edge -> Edge
 (define (find-edge G e)
   (cond [(empty? G) (error "edge not found")]
@@ -156,24 +192,13 @@
 ;                                 (- (third x) (bottleneck-path P)))) P)))
 
 
-<<<<<<< HEAD
 ;;In Coq
-=======
-;; IN COQ (proof bottleneck_pick_min)
->>>>>>> origin/master
 ;;finds lowest capacity along path
 (define (bottleneck-path P)
   (cond
   [(empty? (rest P)) (third (first P))]
   [else (min (third (first P)) (bottleneck-path (rest P)))]))
 
-
-;; problem here. The st_path can get caught in an infinite path. we need to modify st_path to create a list of visited edges. If the edge has been visited
-;; then pick a new edge from the avalible edges. 
-
-;; st_path( graph ) = st_path_complete( graph, "S", [] )
-
-;; st_path_complete: graph, starting node, list of visited edges -> path (list of edges)
 
 ;;finds a path from S to T sort of
 (define (st-path G node)
@@ -194,13 +219,8 @@
   (filter (lambda (x) (equal? node (first x))) G))
 
 
-<<<<<<< HEAD
 ;;In Coq
-=======
-;; IN COQ (no proofs, fixpoint)
->>>>>>> origin/master
 ;;finds largest capacity in G
-;; graph -> nat
 (define (largest-cap G) 
 (cond
   [(empty? G) 0]
