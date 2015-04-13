@@ -8,9 +8,10 @@ Import ListNotations.
 Record REdge : Set := mk_redge
                         { rsrc : ascii;
                           rdst : ascii;
-                          rcap : nat }.
+                          rcap : nat;
+                          dir  : bool}.
 
-Check (mk_redge "S" "V" 10).
+Check (mk_redge "S" "V" 10 true).
                               
                                
 (* an edge in the full graph *)
@@ -21,7 +22,11 @@ Record Edge : Set := mk_edge
                          cap : nat;
                          flow : nat }.
 
-Definition Graph := list Edge.
+Record Graph : Set := mk_graph
+                             { source : ascii;
+                               sink : ascii;
+                               edges: list Edge
+                              }.
 
 Definition RGraph := list REdge.
 
@@ -29,22 +34,18 @@ Definition RGraph := list REdge.
 (* examples *)
 
 Definition G : Graph
-  := [ mk_edge "S" "U" 20 0 ;
-       mk_edge "S" "V" 10 0 ;
-       mk_edge "U" "V" 30 0 ;
-       mk_edge "U" "T" 10 0 ;
-       mk_edge "V" "T" 20 0
-     ].
+  := mk_graph    "S"
+                 "T"    
+              [ mk_edge "S" "U" 20 0 ;
+                mk_edge "S" "V" 10 0 ;
+                mk_edge "U" "V" 30 0 ;
+                mk_edge "U" "T" 10 0 ;
+                mk_edge "V" "T" 20 0
+              ].
 
-Definition Gf : RGraph
-  := [ mk_redge "S" "U" 20 ;
-       mk_redge "S" "V" 10 ;
-       mk_redge "U" "V" 30 ;
-       mk_redge "U" "T" 10 ;
-       mk_redge "V" "T" 20 ].
 
 Definition blankREdge : REdge
-  := mk_redge " " " " 0.
+  := mk_redge " " " " 0 false.
 
 (*
 Fixpoint bottleneck (fst:REdge)
@@ -128,6 +129,97 @@ Proof.
     auto.
     
 Qed.
+
+Fixpoint find_outgoing (Gf: list REdge) (s:ascii) : list REdge :=
+     match Gf with
+        |[] => []
+        |h :: t => if(ascii_dec (rsrc h) s)
+                   then ( h :: (find_outgoing t s))
+                   else (find_outgoing t s)
+     end.
+
+
+Fixpoint member (s: ascii) (visited: list ascii) : bool :=
+  match visited with
+    |[] => false
+    |h :: t => if(ascii_dec h s)
+               then true
+               else (member s t)
+  end.
+
+SearchAbout nat.
+           
+
+
+Fixpoint graph_residual (G: list Edge) : list REdge :=
+  match G with
+    |[] => []
+    |h::t => if (lt_dec (flow h) 0)
+             then (mk_redge (dst h) (src h) (flow h) false)  ::
+                    if(lt_dec (flow h) (cap h))
+                    then(mk_redge (dst h) (src h) ((cap h) -(flow h)) true) ::
+                    (graph_residual t)
+                    else (graph_residual t)
+             else (if (lt_dec (flow h) (cap h))
+                    then(mk_redge (dst h) (src h)  ((cap h)- (flow h)) true) ::
+                      (graph_residual t)
+                    else (graph_residual t))
+  end.
+
+Fixpoint update_edge_flow (G: list Edge) (s t: ascii) (amt: nat) : list Edge :=
+  match G with
+    |[] => []
+    |head :: tail => if (ascii_dec s (src head))
+                  then(if (ascii_dec t (dst head))
+                       then (mk_edge (src head) (dst head) (cap head) ((flow head) + amt))                              :: tail
+                       else (head :: (update_edge_flow tail s t amt)))
+                  else (head :: (update_edge_flow tail s t amt)) 
+  end.
+    
+
+Fixpoint augment_amt (G: list Edge) (P: list REdge) (amt: nat) : list Edge :=
+  match P with
+    |[] => G
+    |h :: t => if (dir h)
+               then (augment_amt (update_edge_flow G (rsrc h) (rdst h) amt) t amt)
+               else (augment_amt (update_edge_flow G (rsrc h) (rdst h) (0 - amt)) t amt)
+  end.
+
+Definition augment (G: list Edge) (P: list REdge) : list Edge :=
+  (augment_amt G P (bottleneck P)).
+
+Fixpoint main_loop (G: Graph) (Gf: list REdge) : Graph :=
+ match (st_path Gf (source G) (sink G) []) with
+         |false => G
+         |h :: t => (main_loop (mk_graph (source G) (sink G) (augment (edges G)
+                                         (st_path Gf (source G) (sink G) []))
+                                         (graph_residual (augment (edges G)
+                                         (st_path Gf (source G) (sink G) [])))))
+ end.
+         
+         
+Definition max_flow (G: Graph) : Graph :=
+  (main_loop G (graph_residual (edges G))).
+
+
+
+Fixpoint st_path_any (Gf s_edges: list REdge) (t: ascii) (visited: list ascii) : list REdge \/ bool :=
+  match s_edges with
+    |[] => false
+    |fst ::rst => if(ascii_dec (rdest fst) t)
+              then (list (rsrc fst))
+              else match st_path Gf (rdest fst) t visited with
+                     |false => (st_path_any Gf rst t  (rdst fst) :: visited)
+                     |head::tail => fst::head::tail
+                   end
+  end.
+
+Definition st_path (Gf: list REdge) (s t: ascii) (visited: list ascii) : list REdge \/ bool :=
+  if(member s visited)
+  then false
+         else (st_path_any Gf (find_outgoing Gf s) t s::visited).
+
+
 
 
 Fixpoint largest_cap (rG: RGraph) : nat :=

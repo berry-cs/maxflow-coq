@@ -129,10 +129,6 @@ Proof.
     
 Qed.
 
-Definition beq_ascii (a b: ascii) : bool :=
-  if (beq_nat (nat_of_ascii a) (nat_of_ascii b))
-  then true
-  else false.
 
 Fixpoint largest_cap (rG: RGraph) : nat :=
   match rG with
@@ -142,7 +138,11 @@ Fixpoint largest_cap (rG: RGraph) : nat :=
   end.
 
 Definition edge_equal (rE1 rE2: REdge) : bool :=
-   (andb (beq_ascii (rsrc rE1)  (rsrc rE2)) (beq_ascii (rdst rE1) (rdst rE2))).
+  if(ascii_dec (rsrc rE1)(rsrc rE2))
+   then if (ascii_dec (rdst rE1) (rdst rE2))
+        then true
+        else false
+    else false.
 
 Fixpoint contains_edge (rG: RGraph) (rE: REdge) : bool :=
   match rG with
@@ -157,7 +157,7 @@ Definition non_zero_edge (rE: REdge) : bool :=
 Fixpoint all_vert_paths (rG: RGraph) (v: ascii) : RGraph :=
   match rG with
     |[] => []
-    | h :: t => if (beq_ascii v (rsrc h))
+    | h :: t => if (ascii_dec v (rsrc h))
                     then h :: (all_vert_paths t v)
                     else (all_vert_paths t v)
   end.
@@ -171,7 +171,19 @@ Fixpoint select_edge (rG: RGraph) (v: ascii) : REdge :=
   end.
 
 Compute (select_edge Gf "S").
-                                               
+
+
+Fixpoint find_edge (rG: RGraph) (rE: REdge) : REdge :=
+  match rG with
+    |[] => blankREdge
+    |h :: t => if(edge_equal h rE)
+               then h
+               else (find_edge t rE)
+  end.
+
+Definition reduce_by_REdge (rE: REdge) (n : nat) : REdge :=
+  (mk_redge (rsrc rE) (rdst rE) ((rcap rE)-n)).
+
 
 
 
