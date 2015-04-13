@@ -21,7 +21,7 @@
 (define-struct edge (src dest cap flow) #:transparent)
 ;; an edge in the graph, with total capacity, and current flow
 
-(define-struct graph (source sink edges) #:transparent)
+(define-struct graph (source sink nodes edges) #:transparent)
 ;; A Graph is (graph node node (listof edge))
 
 
@@ -58,7 +58,7 @@
 (define U 2)
 (define V 3)
 
-(define G1 (graph S T
+(define G1 (graph S T 4
                   (list (make-edge S U 20 0)
                         (make-edge U T 10 0)
                         (make-edge S V 10 0)
@@ -73,7 +73,7 @@
                  (make-redge U V 30 true)
                  (make-redge V T 20 true)))
 
-(define G1a (graph S T
+(define G1a (graph S T 4
                    (list (make-edge S U 20 20)
                          (make-edge U T 10 0)
                          (make-edge S V 10 0)
@@ -110,7 +110,7 @@
 ;; computes the max flow along given graph
 
 (check-expect (max-flow G1)
-              (graph S T
+              (graph S T 4
                      (list (make-edge S U 20 20)
                            (make-edge U T 10 10)
                            (make-edge S V 10 10)
@@ -128,13 +128,13 @@
 ;; graph G, and recomputes the residual graph before repeating the process
 ;; produces the graph G, with no further changes, if no path is found
 (define (main-loop G Gf)
-  (define P (st-path Gf (graph-source G) (graph-sink G) '()))
+  (define P (st-path Gf (graph-source G) (graph-sink G) '() (graph-nodes G)))
   (cond
     [(false? P) G]
     [else
      (define newGedges (augment (graph-edges G) P))
      (define newGf (graph->residual newGedges))
-     (main-loop (graph (graph-source G) (graph-sink G) newGedges) newGf)]))
+     (main-loop (graph (graph-source G) (graph-sink G) (graph-nodes G) newGedges) newGf)]))
 
 
 
@@ -240,31 +240,30 @@
 ;; finds any path from s to t in the given list of redges (residual graph)
 ;; succeeds if there is a path, that does not pass through any of the visited
 ;; list of nodes
-(check-expect (st-path RG1 S T empty)
+(check-expect (st-path RG1 S T empty 4)
               (list  (redge 0 2 20 #t)
                      (redge 2 1 10 #t)))
 
-(define (st-path Gf s t visited)
+(define (st-path Gf s t visited num-unvisited)
+  ;; st-path/any : (listof redge) (listof redge) Node (listof Node) -> [Maybe Path]
+  ;; finds a path from any of the outgoing edges from s to t, ...
+  (define (st-path/any s-edges visited num-unvisited)
+    (match s-edges
+      ['() #f]
+      [(cons (redge n1 n2 cap fw?) rst)
+       (if (= n2 t)
+           (list (first s-edges))
+           (match (st-path Gf n2 t visited num-unvisited)
+             [#f (st-path/any rst (cons n2 visited) (sub1 num-unvisited))]
+             [lst (cons (first s-edges) lst)]))]))
+  
   (cond
+    [(= 0 num-unvisited) #f]
     [(member s visited) #f]
     [else 
      (define all-out (find-outgoing Gf s))
-     (st-path/any Gf all-out t (cons s visited))]))
-     
+     (st-path/any all-out (cons s visited) (sub1 num-unvisited))]))
 
-
-
-;; st-path/any : (listof redge) (listof redge) Node (listof Node) -> [Maybe Path]
-;; finds a path from any of the outgoing edges from s to t, ...
-(define (st-path/any Gf s-edges t visited)
-  (match s-edges
-    ['() #f]
-    [(cons (redge n1 n2 cap fw?) rst)
-     (if (= n2 t)
-         (list (first s-edges))
-         (match (st-path Gf n2 t visited)
-           [#f (st-path/any Gf rst t (cons n2 visited))]
-           [lst (cons (first s-edges) lst)]))]))
        
      
 
@@ -285,7 +284,7 @@
 ;;    http://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
 
 (check-expect 
- (max-flow (graph 0 5
+ (max-flow (graph 0 5 6
                   (list (edge 0 1 16 0)
                         (edge 0 2 13 0)
                         (edge 1 2 10 0)
@@ -296,7 +295,7 @@
                         (edge 4 3 7 0)
                         (edge 3 5 20 0)
                         (edge 4 5 4 0))))
- (graph 0 5
+ (graph 0 5 6
         (list (edge 0 1 16 16) ; this is slightly different
               (edge 0 2 13 7)  ; than the solution on that web
               (edge 1 2 10 4)  ; page, but gives the same max flow 
