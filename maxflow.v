@@ -28,6 +28,7 @@ Record Edge : Set := mk_edge
 Record Graph : Set := mk_graph
                              { source : ascii;
                                sink : ascii;
+                               nodes : nat;
                                edges: list Edge
                               }.
 
@@ -38,7 +39,8 @@ Definition RGraph := list REdge.
 
 Definition G : Graph
   := mk_graph    "S"
-                 "T"    
+                 "T"
+                 4
               [ mk_edge "S" "U" 20 0 ;
                 mk_edge "S" "V" 10 0 ;
                 mk_edge "U" "V" 30 0 ;
@@ -199,6 +201,20 @@ Definition augment (G: list Edge) (P: list REdge) : list Edge :=
   (augment_amt G P (bottleneck P)).
 
 
+
+Lemma st_path_correct :
+  forall ns Gf s t n vs es,
+    nodes_in Gf = ns ->
+    subset vs ns ->
+    n > length ns ->
+    st_path Gf s t vs n = Some es ->
+
+    forall e in es,  e is in Gf  /\
+     connected_up es  /\
+    ,,,, es ,,,,
+      
+
+
 Fixpoint st_path (Gf: list REdge) (s t: ascii) (visited: list ascii) (n:nat) {struct n}
 : option (list REdge) :=
   match n with
@@ -223,6 +239,8 @@ Fixpoint st_path (Gf: list REdge) (s t: ascii) (visited: list ascii) (n:nat) {st
   end.
 Compute (st_path RG "S" "T" nil 4).
 
+
+Theorem path_none_lt_n : forall s t : ascii, forall G : Graph, forall visited : list ascii, (st_path (graph_residual G) s t visited (nodes G)) = None -> (lt (length visited) (nodes G)).   
 (*
 REMOVED
 Fixpoint st_path_any (Gf s_edges: list REdge) (t: ascii) (visited: list ascii)
@@ -238,25 +256,21 @@ Fixpoint st_path_any (Gf s_edges: list REdge) (t: ascii) (visited: list ascii)
   end.
 *)
 
-
-
-
-
-
-
-
 Fixpoint main_loop (G: Graph) (Gf: list REdge) : Graph :=
- match (st_path Gf (source G) (sink G) []) with
-         |false => G
-         |h :: t => (main_loop (mk_graph (source G) (sink G) (augment (edges G)
-                                         (st_path Gf (source G) (sink G) []))
-                                         (graph_residual (augment (edges G)
-                                         (st_path Gf (source G) (sink G) [])))))
+ match  st_path Gf (source G) (sink G) [] (S (nodes G)) with
+         |None => G
+         |Some pth =>  main_loop (mk_graph (source G) (sink G) (nodes G) (augment (edges G) 
+                                        pth) )
+                                        (graph_residual (augment (edges G)
+                                        pth))
  end.
          
          
 Definition max_flow (G: Graph) : Graph :=
   (main_loop G (graph_residual (edges G))).
+
+
+
 
 
 
