@@ -312,14 +312,20 @@ Lemma find_outgoing_src
                   forall oe, In oe lo -> rsrc oe = s.
 Admitted.
 
+Lemma find_outgoing_in
+: forall Gf s lo, find_outgoing Gf s = lo ->
+                  forall oe, In oe Gf.
+Admitted.
+
   apply find_outgoing_src with Gf (oe :: lo'); auto.
   unfold In.
   left; auto.
 
   (* show e  \in  Gf , from the spv_cons rule *)
-
+  apply find_outgoing_in with s (oe :: lo'); auto.
   
-
+  apply spv_nil; auto.
+  
 Qed.
 
 
