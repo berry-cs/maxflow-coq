@@ -310,17 +310,82 @@ Proof.
 Lemma find_outgoing_src
 : forall Gf s lo, find_outgoing Gf s = lo ->
                   forall oe, In oe lo -> rsrc oe = s.
-Admitted.
+Proof.
+  induction Gf as [| fst rst].
+  intros.
+  simpl in H.
+  rewrite <- H in H0.
+  inversion H0.
 
+  (* Gf = fst :: rst *)
+  simpl.
+  intros s lo H.
+  destruct (ascii_dec (rsrc fst) s).
+
+  rewrite <- H; simpl; intros oe Hin.
+  destruct lo as [ | oe' lo'].
+  discriminate H. (* lo cannot be empty *)
+  destruct Hin as [Hin1 | Hin2].
+  rewrite <- Hin1; auto.
+  apply IHrst with (find_outgoing rst s); auto.
+
+  (* here rsrc fst <> s *)
+  apply IHrst.
+  trivial.
+Qed.
+
+  
   apply find_outgoing_src with Gf (oe :: lo'); auto.
   unfold In.
   left; auto.
 
   (* show e  \in  Gf , from the spv_cons rule *)
 
+  Lemma find_outgoing_in : forall Gf s lo,
+                             find_outgoing Gf s = lo ->
+                             forall oe, In oe lo -> In oe Gf.
+  Proof.
+    induction Gf as [ | e Gf'].
+    simpl.
+    intros s lo H1 oe H2.
+    rewrite <- H1 in H2; inversion H2.
+
+    intros s lo H1 oe H2.
+    simpl in H1.
+    destruct (ascii_dec (rsrc e) s).
+    
+    (* case rsrc e = s *)
+    simpl.
+    rewrite <- H1 in H2.
+    inversion H2.
+    left; auto.
+    right; apply IHGf' with s (find_outgoing Gf' s); auto.
+
+    (* case rsrc e <> s *)
+    simpl.
+    right.
+    apply IHGf' with s lo; auto.
+Qed.
+
+  apply find_outgoing_in with s (oe :: lo'); auto.
+  left; auto.
+  apply spv_nil; auto.
+
+  assert (In oe Gf).
+  apply find_outgoing_in with s (oe :: lo'); auto.
+  left; auto.
+
+  Lemma nodes_of_in :
+    forall Gf oe,
+      In oe Gf ->
+      In (rsrc oe) (nodes_of Gf) /\ In (rdst oe) (nodes_of Gf).
+Admitted.
   
+  destruct (nodes_of_in Gf oe); auto.
+  replace t with (rdst oe); auto.
 
 Qed.
+
 
 
 
