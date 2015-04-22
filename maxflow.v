@@ -379,7 +379,28 @@ Qed.
     forall Gf oe,
       In oe Gf ->
       In (rsrc oe) (nodes_of Gf) /\ In (rdst oe) (nodes_of Gf).
-Admitted.
+  Proof.
+    induction Gf as [ | e Gf'].
+
+    (*Gf is empty case*)
+    intros.
+    simpl in H.
+    simpl.
+    auto.
+
+    (*Gf is not empty case*)
+    intros.
+    destruct H.
+    rewrite -> H.
+    assert(nodes_of (oe :: Gf') = (rsrc oe) :: (rdst oe) :: (nodes_of Gf')).
+    simpl.
+    
+    rewrite -> H0.
+    simpl.
+    auto.
+
+    
+    
   
   destruct (nodes_of_in Gf oe); auto.
   replace t with (rdst oe); auto.
